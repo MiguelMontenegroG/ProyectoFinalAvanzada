@@ -1,0 +1,777 @@
+openapi: 3.1.0
+info:
+  title: "Plataforma de Reportes Ciudadanos"
+  description: |
+    API para la gestión de reportes ciudadanos sobre seguridad, emergencias e infraestructura.
+    Permite a los usuarios reportar incidentes, gestionar perfiles, comentar en reportes,
+    y a los administradores moderar contenido y generar informes.
+  version: "1.2.0"
+  contact:
+    name: "Equipo de Desarrollo"
+    email: "soporte@reportesciudadanos.com"
+
+servers:
+  - url: "https://api.reportesciudadanos.com/v1"
+    description: "Servidor de producción"
+  - url: "http://localhost:8080"
+    description: "Servidor de desarrollo"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Autenticación JWT para usuarios y administradores"
+
+  schemas:
+    Usuario:
+      type: object
+      required:
+        - id
+        - nombre
+        - correo
+        - password
+        - activo
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Identificador único del usuario"
+        nombre:
+          type: string
+          maxLength: 100
+          description: "Nombre completo del usuario"
+        correo:
+          type: string
+          format: email
+          description: "Correo electrónico válido"
+        telefono:
+          type: string
+          pattern: "^\+?[0-9]{7,15}$"
+          description: "Número de teléfono internacional"
+        direccion:
+          type: string
+          description: "Dirección física completa"
+        ciudad:
+          type: string
+          description: "Ciudad de residencia"
+        barrio:
+          type: string
+          description: "Barrio o sector específico"
+        fotoPerfil:
+          type: string
+          format: uri
+          description: "URL de la imagen de perfil en Cloudinary"
+        biografia:
+          type: string
+          maxLength: 500
+          description: "Descripción personal del usuario"
+        activo:
+          type: boolean
+          description: "Estado de la cuenta (activada/desactivada)"
+        rol:
+          type: string
+          enum: [cliente, moderador, administrador]
+          default: "cliente"
+          description: "Rol del usuario en el sistema"
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: "Contraseña encriptada"
+
+    Reporte:
+      type: object
+      required:
+        - titulo
+        - descripcion
+        - categoria
+        - ubicacion
+        - usuario_id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: "Identificador único del reporte"
+        titulo:
+          type: string
+          maxLength: 120
+          description: "Título descriptivo del incidente"
+        descripcion:
+          type: string
+          maxLength: 1000
+          description: "Detalles completos del reporte"
+        categoria:
+          type: array
+          items:
+            type: string
+            enum: [seguridad, emergencia_médica, infraestructura, mascotas, comunidad]
+          minItems: 1
+          description: "Categorías aplicables al reporte"
+        prioridad:
+          type: string
+          enum: [baja, media, alta, urgente]
+          default: "media"
+          description: "Nivel de prioridad según impacto"
+        ubicacion:
+          type: object
+          required:
+            - latitud
+            - longitud
+          properties:
+            latitud:
+              type: number
+              format: float
+              minimum: -90
+              maximum: 90
+              description: "Coordenada geográfica"
+            longitud:
+              type: number
+              format: float
+              minimum: -180
+              maximum: 180
+            direccion:
+              type: string
+              description: "Dirección humana legible"
+            mapa_url:
+              type: string
+              format: uri
+              description: "URL de Mapbox para visualización"
+        imagenes:
+          type: array
+          items:
+            type: string
+            format: uri
+          maxItems: 5
+          description: "URLs de imágenes en Cloudinary"
+        estado:
+          type: string
+          enum: [pendiente, en_revisión, verificado, rechazado, resuelto]
+          default: "pendiente"
+          description: "Estado actual del reporte"
+        historial_estados:
+          type: array
+          items:
+            type: object
+            properties:
+              estado:
+                type: string
+              fecha:
+                type: string
+                format: date-time
+              motivo:
+                type: string
+          description: "Historial completo de cambios de estado"
+        likes:
+          type: integer
+          minimum: 0
+          description: "Total de votos 'Es importante'"
+        umbral_verificacion:
+          type: integer
+          default: 50
+          description: "Límite para verificación automática"
+        usuario_id:
+          type: string
+          format: uuid
+          description: "ID del usuario creador"
+        fecha_creacion:
+          type: string
+          format: date-time
+          description: "Fecha y hora de creación"
+
+    Comentario:
+      type: object
+      required:
+        - texto
+        - usuario_id
+        - reporte_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        texto:
+          type: string
+          maxLength: 500
+        usuario_id:
+          type: string
+          format: uuid
+        fecha_creacion:
+          type: string
+          format: date-time
+        likes:
+          type: integer
+          minimum: 0
+        usuarios_like:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    Notificacion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tipo:
+          type: string
+          enum: [nuevo_reporte, cambio_estado, nuevo_comentario, alerta_zona]
+        mensaje:
+          type: string
+        fecha:
+          type: string
+          format: date-time
+        leida:
+          type: boolean
+          default: false
+        metadata:
+          type: object
+          additionalProperties: true
+
+paths:
+  # ======================
+  # Autenticación
+  # ======================
+  /auth/registro:
+    post:
+      tags: [Autenticación]
+      summary: Registrar nuevo usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nombre
+                - correo
+                - password
+              properties:
+                nombre:
+                  type: string
+                correo:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        201:
+          description: Usuario registrado, código de activación enviado
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL para activación
+        409:
+          description: Correo ya registrado
+
+  /auth/activar:
+    post:
+      tags: [Autenticación]
+      summary: Activar cuenta con código
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - codigo
+              properties:
+                codigo:
+                  type: string
+                  length: 6
+      responses:
+        204:
+          description: Cuenta activada exitosamente
+        410:
+          description: Código expirado o inválido
+
+  /auth/login:
+    post:
+      tags: [Autenticación]
+      summary: Iniciar sesión
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - correo
+                - password
+              properties:
+                correo:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        200:
+          description: Credenciales válidas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  expira:
+                    type: string
+                    format: date-time
+        401:
+          description: Credenciales inválidas
+
+  /auth/recuperar-contrasena:
+    post:
+      tags: [Autenticación]
+      summary: Solicitar recuperación de contraseña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - correo
+              properties:
+                correo:
+                  type: string
+                  format: email
+      responses:
+        202:
+          description: Código de recuperación enviado
+
+  /auth/cambiar-contrasena:
+    post:
+      tags: [Autenticación]
+      summary: Establecer nueva contraseña
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - codigo
+                - nuevaContrasena
+              properties:
+                codigo:
+                  type: string
+                nuevaContrasena:
+                  type: string
+                  format: password
+      responses:
+        204:
+          description: Contraseña actualizada
+        400:
+          description: Código inválido
+
+  # ======================
+  # Gestión de Usuarios
+  # ======================
+  /usuarios/{id}:
+    get:
+      summary: Obtener perfil de usuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Usuario"
+        404:
+          description: Usuario no encontrado
+
+    put:
+      security: [BearerAuth: []]
+      summary: Actualizar perfil
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Usuario"
+      responses:
+        200:
+          description: Perfil actualizado
+        403:
+          description: No autorizado para modificar este usuario
+
+    delete:
+      security: [BearerAuth: []]
+      summary: Desactivar cuenta
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Cuenta desactivada
+        403:
+          description: Operación no permitida
+
+  # ======================
+  # Reportes
+  # ======================
+  /reportes:
+    post:
+      security: [BearerAuth: []]
+      summary: Crear nuevo reporte
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Reporte"
+      responses:
+        201:
+          description: Reporte creado
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URL del nuevo reporte
+        422:
+          description: Datos geográficos inválidos
+
+    get:
+      summary: Listar reportes con filtros
+      parameters:
+        - name: radio
+          in: query
+          schema:
+            type: number
+            minimum: 0.1
+            maximum: 50
+          description: Radio en kilómetros desde las coordenadas
+        - name: latitud
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: longitud
+          in: query
+          schema:
+            type: number
+            format: float
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Reporte"
+
+  /reportes/{id}:
+    get:
+      summary: Obtener detalles de reporte
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Reporte"
+        404:
+          description: Reporte no encontrado
+
+    patch:
+      security: [BearerAuth: []]
+      summary: Actualizar reporte
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Reporte"
+      responses:
+        200:
+          description: Reporte actualizado
+        403:
+          description: No es el propietario del reporte
+
+    delete:
+      security: [BearerAuth: []]
+      summary: Eliminar reporte
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        204:
+          description: Reporte eliminado
+        403:
+          description: Requiere rol de administrador
+
+  # ======================
+  # Interacciones
+  # ======================
+  /reportes/{id}/likes:
+    post:
+      security: [BearerAuth: []]
+      summary: Dar like a reporte
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        201:
+          description: Like registrado
+        409:
+          description: Ya ha dado like anteriormente
+
+  /reportes/{id}/comentarios:
+    get:
+      summary: Listar comentarios del reporte
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Comentario"
+
+    post:
+      security: [BearerAuth: []]
+      summary: Añadir comentario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - texto
+              properties:
+                texto:
+                  type: string
+      responses:
+        201:
+          description: Comentario creado
+
+  # ======================
+  # Moderación
+  # ======================
+  /admin/reportes/{id}/estado:
+    patch:
+      security: [BearerAuth: []]
+      summary: Cambiar estado de reporte (Moderador)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - estado
+                - motivo
+              properties:
+                estado:
+                  type: string
+                  enum: [verificado, rechazado, resuelto]
+                motivo:
+                  type: string
+      responses:
+        200:
+          description: Estado actualizado
+        403:
+          description: Requiere rol de moderador
+
+  /admin/usuarios:
+    get:
+      security: [BearerAuth: []]
+      summary: Listar usuarios (Admin)
+      parameters:
+        - name: rol
+          in: query
+          schema:
+            type: string
+            enum: [cliente, moderador, administrador]
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Usuario"
+        403:
+          description: Acceso restringido
+
+  # ======================
+  # Notificaciones
+  # ======================
+  /notificaciones:
+    get:
+      security: [BearerAuth: []]
+      summary: Obtener notificaciones del usuario
+      parameters:
+        - name: no_leidas
+          in: query
+          schema:
+            type: boolean
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notificacion"
+
+    patch:
+      security: [BearerAuth: []]
+      summary: Marcar notificaciones como leídas
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+                format: uuid
+      responses:
+        204:
+          description: Notificaciones actualizadas
+
+  # ======================
+  # Mapas
+  # ======================
+  /mapa:
+    get:
+      summary: Obtener datos para mapa interactivo
+      parameters:
+        - name: zoom
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 18
+        - name: bbox
+          in: query
+          schema:
+            type: string
+          description: "Bounding box en formato minLon,minLat,maxLon,maxLat"
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MapaVisualizacion"
+
+  # ======================
+  # Informes
+  # ======================
+  /informes:
+    post:
+      security: [BearerAuth: []]
+      summary: Generar informe PDF/Excel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tipo:
+                  type: string
+                  enum: [pdf, excel]
+                filtros:
+                  type: object
+      responses:
+        202:
+          description: Informe en proceso de generación
+          headers:
+            Content-Location:
+              schema:
+                type: string
+              description: URL para descarga
+
+  /informes/{id}:
+    get:
+      security: [BearerAuth: []]
+      summary: Descargar informe generado
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          content:
+            application/pdf: {}
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: {}
