@@ -2,12 +2,9 @@ package co.edu.uniquindio.proyecto.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import org.springframework.data.mongodb.core.mapping.Document;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
-
-@Document(collection = "reportes") // Indica que esta clase se almacena en la colección "reportes" en MongoDB
-
 
 @Schema(description = "Registro de cambio de estado de un reporte")
 @Data
@@ -16,8 +13,11 @@ import java.time.LocalDateTime;
 @Builder
 public class HistorialEstado {
 
-    @Schema(description = "Estado del reporte", example = "verificado", allowableValues = {"pendiente", "en_revision", "verificado", "rechazado", "resuelto"})
-    private String estado;
+    @Schema(description = "Estado del reporte",
+            allowableValues = {"PENDIENTE", "EN_REVISION", "VERIFICADO", "RECHAZADO", "RESUELTO"},
+            example = "VERIFICADO")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    private EstadoReporte estado;
 
     @Schema(description = "Fecha y hora del cambio de estado", example = "2023-03-15T14:30:00")
     @Builder.Default
@@ -26,6 +26,26 @@ public class HistorialEstado {
     @Schema(description = "Motivo del cambio de estado", example = "Verificado por múltiples reportes similares")
     private String motivo;
 
-    public HistorialEstado(String nuevoEstado, String motivo) {
+    /**
+     * Constructor alternativo para creación directa
+     * @param estado Estado del reporte
+     * @param motivo Motivo del cambio
+     */
+    public HistorialEstado(EstadoReporte estado, String motivo) {
+        this.estado = estado;
+        this.motivo = motivo;
+        this.fecha = LocalDateTime.now();
+    }
+
+    /**
+     * Representación legible del historial
+     * @return String con formato [fecha] estado: motivo
+     */
+    @Override
+    public String toString() {
+        return String.format("[%s] %s: %s",
+                fecha.toString(),
+                estado != null ? estado.name() : "null",
+                motivo != null ? motivo : "");
     }
 }

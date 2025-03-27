@@ -5,12 +5,16 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 @Document(collection = "usuarios") // Indica que es un documento de MongoDB
 @Schema(description = "Información del usuario en el sistema")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
 public class Usuario {
 
     @Id
@@ -49,4 +53,26 @@ public class Usuario {
 
     @Schema(description = "Contraseña encriptada", required = true, minLength = 8)
     private String password;
+
+    // Campos para autenticación
+    private String codigoActivacion;
+    private LocalDateTime fechaExpiracionCodigo;
+    private String codigoRecuperacion;
+
+    // Métodos auxiliares
+    public void generarCodigoActivacion() {
+        this.codigoActivacion = UUID.randomUUID().toString();
+        this.fechaExpiracionCodigo = LocalDateTime.now().plusHours(24);
+    }
+
+    public void generarCodigoRecuperacion() {
+        this.codigoRecuperacion = UUID.randomUUID().toString();
+        this.fechaExpiracionCodigo = LocalDateTime.now().plusHours(1);
+    }
+
+    public void limpiarCodigos() {
+        this.codigoActivacion = null;
+        this.codigoRecuperacion = null;
+        this.fechaExpiracionCodigo = null;
+    }
 }

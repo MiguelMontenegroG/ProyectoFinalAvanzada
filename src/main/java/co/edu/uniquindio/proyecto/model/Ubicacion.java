@@ -2,9 +2,6 @@ package co.edu.uniquindio.proyecto.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-@Document(collection = "reportes") // Indica que esta clase se almacena en la colección "reportes" en MongoDB
 
 @Schema(description = "Información de ubicación geográfica")
 @Data
@@ -17,7 +14,7 @@ public class Ubicacion {
     private Double latitud;
 
     @Schema(description = "Coordenada geográfica de longitud", example = "-75.6757", minimum = "-180", maximum = "180", required = true)
-    private Double longitud;
+    private String longitud;
 
     @Schema(description = "Dirección humana legible", example = "Calle 21 #15-32, Armenia")
     private String direccion;

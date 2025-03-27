@@ -285,6 +285,170 @@ components:
                 type: string
                 description: "Información adicional"
 
+    DenunciaFormal:
+      type: object
+      required: [ titulo, descripcion, autoridad_destino ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        titulo:
+          type: string
+          maxLength: 120
+        descripcion:
+          type: string
+          maxLength: 1000
+        evidencias:
+          type: array
+          items:
+            type: string
+            format: uri
+          maxItems: 3
+        autoridad_destino:
+          type: string
+          enum: [ policia, defensa_civil, municipio, proteccion_animales ]
+        estado_seguimiento:
+          type: string
+          enum: [ recibido, en_proceso, respondido, cerrado ]
+          default: "recibido"
+        respuesta_oficial:
+          type: string
+          maxLength: 1000
+        fecha_creacion:
+          type: string
+          format: date-time
+
+    AlertaClimatica:
+      type: object
+      properties:
+        tipo:
+          type: string
+          enum: [ tormenta, inundacion, ola_calor, heladas ]
+        severidad:
+          type: string
+          enum: [ leve, moderada, grave ]
+          default: "leve"
+        area_afectada:
+          type: object
+          properties:
+            latitud:
+              type: number
+              format: float
+              minimum: -90
+              maximum: 90
+            longitud:
+              type: number
+              format: float
+              minimum: -180
+              maximum: 180
+            direccion:
+              type: string
+            mapa_url:
+              type: string
+              format: uri
+        fecha_emision:
+          type: string
+          format: date-time
+        fecha_expiracion:
+          type: string
+          format: date-time
+        recomendaciones:
+          type: array
+          items:
+            type: string
+          example: [ "Evitar zonas bajas", "Almacenar agua potable" ]
+
+    ProtocoloEmergencia:
+      type: object
+      required: [ titulo, procedimientos ]
+      properties:
+        titulo:
+          type: string
+          example: "Protocolo para inundaciones"
+        procedimientos:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+          example: [ "Cortar suministro eléctrico", "Refugiarse en planta alta" ]
+        ultima_actualizacion:
+          type: string
+          format: date
+        autoridades_relacionadas:
+          type: array
+          items:
+            type: string
+          example: [ "Defensa Civil", "Hospital Regional" ]
+
+    InventarioRecursos:
+      type: object
+      properties:
+        item:
+          type: string
+          example: "Generador eléctrico portátil"
+        propietario_id:
+          type: string
+          format: uuid
+        disponible:
+          type: boolean
+          default: true
+        ubicacion:
+          type: object
+          properties:
+            latitud:
+              type: number
+              format: float
+              minimum: -90
+              maximum: 90
+            longitud:
+              type: number
+              format: float
+              minimum: -180
+              maximum: 180
+            direccion:
+              type: string
+            mapa_url:
+              type: string
+              format: uri
+        condiciones_uso:
+          type: string
+          enum: [ prestamo, donacion, venta ]
+          default: "prestamo"
+
+    EncuestaComunitaria:
+      type: object
+      required: [ pregunta, opciones ]
+      properties:
+        id:
+          type: string
+          format: uuid
+        pregunta:
+          type: string
+          maxLength: 200
+          example: "¿Necesitamos más alumbrado público en la calle principal?"
+        opciones:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          minItems: 2
+          maxItems: 5
+          example: [ "Sí", "No", "Neutral" ]
+        votos:
+          type: object
+          additionalProperties:
+            type: integer
+          description: "Conteo de votos por opción"
+        fecha_limite:
+          type: string
+          format: date
+        creador_id:
+          type: string
+          format: uuid
+        resultados_publicos:
+          type: boolean
+          default: true
+
 paths:
   # ======================
   # Autenticación
@@ -292,7 +456,7 @@ paths:
   /auth/registro:
     post:
       tags: [Autenticación]
-      summary: Registrar nuevo usuario
+      summary: Registro nuevo usuario
       description: |
         Crea una nueva cuenta de usuario. Se enviará un código de activación al correo electrónico proporcionado.
       requestBody:
@@ -357,7 +521,7 @@ paths:
   /auth/login:
     post:
       tags: [Autenticación]
-      summary: Iniciar sesión
+      summary: Inicio de sesión
       description: Autentica al usuario y devuelve un token JWT
       requestBody:
         required: true
@@ -396,7 +560,7 @@ paths:
   /auth/recuperar-contrasena:
     post:
       tags: [Autenticación]
-      summary: Solicitar recuperación de contraseña
+      summary: Solicitud recuperación de contraseña
       description: Envía un código de recuperación al correo electrónico del usuario
       requestBody:
         required: true
@@ -417,7 +581,7 @@ paths:
   /auth/cambiar-contrasena:
     post:
       tags: [Autenticación]
-      summary: Cambiar contraseña
+      summary: Cambio de contraseña
       description: Establece una nueva contraseña usando el código de recuperación
       requestBody:
         required: true
@@ -445,7 +609,7 @@ paths:
   # ======================
   /usuarios/{id}:
     get:
-      summary: Obtener perfil de usuario
+      summary: Obtención de perfil de usuario
       parameters:
         - name: id
           in: path
@@ -466,7 +630,7 @@ paths:
 
     put:
       security: [BearerAuth: []]
-      summary: Actualizar perfil
+      summary: Actualización de perfil
       parameters:
         - name: id
           in: path
@@ -488,7 +652,7 @@ paths:
 
     delete:
       security: [BearerAuth: []]
-      summary: Desactivar cuenta
+      summary: Desactivación de cuenta
       parameters:
         - name: id
           in: path
@@ -508,7 +672,7 @@ paths:
   /reportes:
     post:
       security: [BearerAuth: []]
-      summary: Crear nuevo reporte
+      summary: Creación de nuevo reporte
       requestBody:
         required: true
         content:
@@ -529,7 +693,7 @@ paths:
           description: Datos geográficos inválidos
 
     get:
-      summary: Listar reportes
+      summary: Listado de reportes
       parameters:
         - name: categoria
           in: query
@@ -588,7 +752,7 @@ paths:
 
   /reportes/{id}:
     get:
-      summary: Obtener detalles de reporte
+      summary: Obteneción detalles de reporte
       parameters:
         - name: id
           in: path
@@ -608,7 +772,7 @@ paths:
 
     patch:
       security: [BearerAuth: []]
-      summary: Actualizar reporte
+      summary: Actualización de reporte
       parameters:
         - name: id
           in: path
@@ -629,7 +793,7 @@ paths:
 
     delete:
       security: [BearerAuth: []]
-      summary: Eliminar reporte
+      summary: Eliminación de reporte
       parameters:
         - name: id
           in: path
@@ -649,7 +813,7 @@ paths:
   /reportes/{id}/likes:
     post:
       security: [BearerAuth: []]
-      summary: Dar like a reporte
+      summary: Like a reporte
       parameters:
         - name: id
           in: path
@@ -665,7 +829,7 @@ paths:
 
   /reportes/{id}/comentarios:
     get:
-      summary: Listar comentarios del reporte
+      summary: Listado de comentarios del reporte
       parameters:
         - name: id
           in: path
@@ -716,7 +880,7 @@ paths:
 
     post:
       security: [BearerAuth: []]
-      summary: Crear nuevo comentario
+      summary: Creación nuevo comentario
       parameters:
         - name: id
           in: path
@@ -755,7 +919,7 @@ paths:
   /comentarios/{id}:
     patch:
       security: [BearerAuth: []]
-      summary: Actualizar comentario
+      summary: Actualización de comentario
       parameters:
         - name: id
           in: path
@@ -784,7 +948,7 @@ paths:
 
     delete:
       security: [BearerAuth: []]
-      summary: Eliminar comentario
+      summary: Eliminación de comentario
       parameters:
         - name: id
           in: path
@@ -801,7 +965,7 @@ paths:
   /comentarios/{id}/likes:
     post:
       security: [BearerAuth: []]
-      summary: Dar like a comentario
+      summary: Like a comentario
       parameters:
         - name: id
           in: path
@@ -821,7 +985,7 @@ paths:
   /admin/reportes/{id}/estado:
     patch:
       security: [BearerAuth: []]
-      summary: Cambiar estado de reporte (Admin)
+      summary: Cambio de estado de reporte (Admin)
       parameters:
         - name: id
           in: path
@@ -855,7 +1019,7 @@ paths:
   /notificaciones:
     get:
       security: [BearerAuth: []]
-      summary: Obtener notificaciones del usuario
+      summary: Obtenención notificaciones del usuario
       parameters:
         - name: leidas
           in: query
@@ -882,7 +1046,7 @@ paths:
   /analytics/reportes:
     get:
       security: [BearerAuth: []]
-      summary: Generar reportes estadísticos
+      summary: Generación de reportes estadísticos
       parameters:
         - name: metricas
           in: query
@@ -910,3 +1074,135 @@ paths:
               schema:
                 type: object
                 additionalProperties: true
+  /encuestas:
+    post:
+      tags: [ Comunidad ]
+      summary: Crear encuesta comunitaria
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EncuestaComunitaria"
+      responses:
+        201:
+          description: Encuesta creada
+          headers:
+            Location:
+              example: "/encuestas/{id}"
+
+    /encuestas/{id}/votar:
+      post:
+        tags: [ Comunidad ]
+        summary: Emitir voto en encuesta
+        parameters:
+          - name: id
+            in: path
+            required: true
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [ opcion ]
+                properties:
+                  opcion:
+                    type: integer
+                    minimum: 0
+                    description: "Índice de la opción seleccionada"
+        responses:
+          204:
+            description: Voto registrado
+          400:
+            description: Opción inválida
+
+    /encuestas:
+
+
+  /encuestas/{id}/votar:
+    post:
+      tags: [Comunidad]
+      summary: Emitir voto en encuesta
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [opcion]
+              properties:
+                opcion:
+                  type: integer
+                  minimum: 0
+      responses:
+        204:
+          description: Voto registrado
+        400:
+          description: Opción inválida
+
+  /denuncias:
+    post:
+      tags: [Legal]
+      summary: Enviar denuncia formal a autoridades
+      security: [BearerAuth: []]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DenunciaFormal"
+      responses:
+        201:
+          description: Denuncia recibida
+          headers:
+            Location:
+              example: "/denuncias/{id}"
+
+    get:
+      tags: [Legal]
+      summary: Consultar estado de denuncias propias
+      security: [BearerAuth: []]
+      responses:
+        200:
+          description: Lista de denuncias
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DenunciaFormal"
+
+  /clima/alertas:
+    get:
+      tags: [Clima]
+      summary: Obtener alertas climáticas activas
+      parameters:
+        - name: latitud
+          in: query
+          required: true
+        - name: longitud
+          in: query
+          required: true
+        - name: radio
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        200:
+          description: Alertas climáticas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AlertaClimatica"

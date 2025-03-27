@@ -1,13 +1,12 @@
 package co.edu.uniquindio.proyecto.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
 
-@Schema(description = "Petición para registrar un nuevo usuario")
 @Data
+
+@Schema(description = "Petición para registrar un nuevo usuario")
 public class RegistroRequest {
 
     @Schema(description = "Nombre completo del usuario", example = "Juan Pérez", required = true)
@@ -21,4 +20,29 @@ public class RegistroRequest {
     @Schema(description = "Contraseña segura", example = "Str0ngP@ssw0rd", required = true)
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String password;
+
+    // Getters y Setters (ESSENCIALES)
+    public String getNombre() {
+        return nombre;
+    }
+
+    public void setNombre(String nombre) {
+        this.nombre = nombre;
+    }
+
+    public String getCorreo() {
+        return correo;
+    }
+
+    public void setCorreo(String correo) {
+        this.correo = correo;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

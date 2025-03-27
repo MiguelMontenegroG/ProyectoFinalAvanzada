@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Document(collection = "reportes") // Indica que esta clase se almacena en la colección "reportes" en MongoDB
+@Document(collection = "reportes")
 @Schema(description = "Información de un reporte ciudadano")
 @Data
 @NoArgsConstructor
@@ -18,7 +18,7 @@ import java.util.UUID;
 @Builder
 public class Reporte {
 
-    @Id  // Define este campo como el identificador único en MongoDB
+    @Id
     @Schema(description = "Identificador único del reporte", example = "550e8400-e29b-41d4-a716-446655440000")
     @Builder.Default
     private String id = UUID.randomUUID().toString();
@@ -44,9 +44,9 @@ public class Reporte {
     @Builder.Default
     private List<String> imagenes = new ArrayList<>();
 
-    @Schema(description = "Estado actual del reporte", example = "pendiente", allowableValues = {"pendiente", "en_revision", "verificado", "rechazado", "resuelto"})
+    @Schema(description = "Estado actual del reporte", example = "pendiente")
     @Builder.Default
-    private String estado = "pendiente";
+    private String estado = EstadoReporte.PENDIENTE.name(); // Cambiado a String pero inicializado con enum
 
     @Schema(description = "Historial completo de cambios de estado")
     @Builder.Default
@@ -69,10 +69,39 @@ public class Reporte {
 
     /**
      * Método para cambiar el estado del reporte y registrar en el historial
+     * @param nuevoEstado Nuevo estado del reporte (como String)
+     * @param motivo Motivo del cambio de estado
      */
     public void cambiarEstado(String nuevoEstado, String motivo) {
-        this.estado = nuevoEstado;
-        this.historialEstados.add(new HistorialEstado(nuevoEstado, motivo));
+        EstadoReporte estadoValidado = EstadoReporte.fromString(nuevoEstado);
+        this.estado = estadoValidado.name();
+        registrarEnHistorial(estadoValidado, motivo);
+    }
+
+    /**
+     * Método para cambiar el estado del reporte y registrar en el historial
+     * @param nuevoEstado Nuevo estado del reporte (como Enum)
+     * @param motivo Motivo del cambio de estado
+     */
+    public void cambiarEstado(EstadoReporte nuevoEstado, String motivo) {
+        this.estado = nuevoEstado.name();
+        registrarEnHistorial(nuevoEstado, motivo);
+    }
+
+    /**
+     * Método para obtener el estado actual como Enum
+     * @return EstadoReporte correspondiente al estado actual
+     */
+    public EstadoReporte getEstadoEnum() {
+        return EstadoReporte.fromString(this.estado);
+    }
+
+    private void registrarEnHistorial(EstadoReporte estado, String motivo) {
+        this.historialEstados.add(HistorialEstado.builder()
+                .estado(estado)
+                .fecha(LocalDateTime.now())
+                .motivo(motivo)
+                .build());
     }
 
     /**
@@ -80,8 +109,44 @@ public class Reporte {
      */
     public void incrementarLikes() {
         this.likes++;
-        if (this.likes >= this.umbralVerificacion && "pendiente".equals(this.estado)) {
-            cambiarEstado("verificado", "Verificado automáticamente por umbral de likes");
+        if (this.likes >= this.umbralVerificacion && EstadoReporte.PENDIENTE.name().equals(this.estado)) {
+            cambiarEstado(EstadoReporte.VERIFICADO, "Verificado automáticamente por umbral de likes");
         }
+    }
+
+    /**
+     * Método para agregar una imagen al reporte
+     * @param urlImagen URL de la imagen en Cloudinary
+     */
+    public void agregarImagen(String urlImagen) {
+        this.imagenes.add(urlImagen);
+    }
+
+    /**
+     * Método para agregar una categoría al reporte
+     * @param categoria Nueva categoría a agregar
+     */
+    public void agregarCategoria(String categoria) {
+        if (!this.categoria.contains(categoria)) {
+            this.categoria.add(categoria);
+        }
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Ubicacion {
+        @Schema(description = "Latitud geográfica", example = "4.628963")
+        private Double latitud;
+
+        @Schema(description = "Longitud geográfica", example = "-75.571442")
+        private Double longitud;
+
+        @Schema(description = "Dirección humana legible", example = "Calle 15 # 23-45, Barrio San José")
+        private String direccion;
+
+        @Schema(description = "URL de Mapbox para visualización", example = "https://api.mapbox.com/styles/v1/mapbox/streets-v11.html")
+        private String mapaUrl;
     }
 }
