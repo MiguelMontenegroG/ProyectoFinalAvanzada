@@ -21,7 +21,15 @@ public class RegistroRequest {
     @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String password;
 
-    // Getters y Setters (ESSENCIALES)
+    @Schema(description = "Número de teléfono del usuario", example = "+573001234567", required = true)
+    @NotBlank(message = "El teléfono es obligatorio")
+    private String telefono;
+
+    @Schema(description = "Rol del usuario", example = "ROLE_USER", required = true)
+    @NotBlank(message = "El rol es obligatorio")
+    private String rol;
+
+    // Getters y Setters
     public String getNombre() {
         return nombre;
     }
@@ -44,5 +52,21 @@ public class RegistroRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getTelefono() {
+        return telefono;
+    }
+
+    public void setTelefono(String telefono) {
+        this.telefono = telefono;
+    }
+
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
     }
 }
