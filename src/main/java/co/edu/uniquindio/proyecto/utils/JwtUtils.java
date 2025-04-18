@@ -4,6 +4,7 @@ import co.edu.uniquindio.proyecto.model.Usuario;
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
 import java.util.Date;
 import java.util.Map;
 
@@ -30,11 +31,12 @@ public class JwtUtils {
     }
 
     public String obtenerExpiracion(String token) {
-        return Jwts.parser()
+        Date expiration = Jwts.parser()
                 .setSigningKey(secret)
                 .parseClaimsJws(token)
                 .getBody()
-                .getExpiration()
-                .toString();
+                .getExpiration();
+
+        return expiration.toString(); // Ejemplo: "Fri Apr 18 20:00:00 GMT 2025"
     }
 }
