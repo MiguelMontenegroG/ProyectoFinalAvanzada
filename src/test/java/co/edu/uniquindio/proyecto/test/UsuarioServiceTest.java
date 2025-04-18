@@ -116,4 +116,41 @@ class UsuarioServiceTest {
         // Verificamos que el repositorio fue llamado
         verify(usuarioRepository).deleteById("550e8400-e29b-41d4-a716-446655440000");
     }
+
+    @Test
+    void testActualizarUsuarioInexistente() {
+        when(usuarioRepository.existsById("id-falso")).thenReturn(false);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> usuarioService.actualizarUsuario("id-falso", usuario));
+
+        assertEquals("No se encontró el usuario con ID: id-falso", exception.getMessage());
+    }
+
+    @Test
+    void testEliminarUsuarioInexistente() {
+        when(usuarioRepository.existsById("id-falso")).thenReturn(false);
+
+        RuntimeException exception = assertThrows(RuntimeException.class,
+                () -> usuarioService.eliminarUsuario("id-falso"));
+
+        assertEquals("No se encontró el usuario con ID: id-falso", exception.getMessage());
+    }
+
+    @Test
+    void testListarVariosUsuarios() {
+        Usuario otroUsuario = Usuario.builder()
+                .id("id-2")
+                .nombre("Maria Gómez")
+                .correo("maria@example.com")
+                .build();
+
+        when(usuarioRepository.findAll()).thenReturn(List.of(usuario, otroUsuario));
+
+        List<Usuario> usuarios = usuarioService.listarUsuarios();
+
+        assertEquals(2, usuarios.size());
+        assertEquals("Maria Gómez", usuarios.get(1).getNombre());
+    }
+
 }

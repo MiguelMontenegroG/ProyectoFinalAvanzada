@@ -1,13 +1,12 @@
 package co.edu.uniquindio.proyecto.service.impl;
 
 import co.edu.uniquindio.proyecto.model.Usuario;
-import co.edu.uniquindio.proyecto.service.UsuarioService;
 import co.edu.uniquindio.proyecto.repository.UsuarioRepository;
+import co.edu.uniquindio.proyecto.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UsuarioServiceImpl implements UsuarioService {
@@ -22,8 +21,8 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public Usuario obtenerUsuario(String id) {
-        Optional<Usuario> usuario = usuarioRepository.findById(id);
-        return usuario.orElse(null); // Si no se encuentra el usuario, se devuelve null
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("No se encontró el usuario con ID: " + id));
     }
 
     @Override
@@ -33,17 +32,18 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public Usuario actualizarUsuario(String id, Usuario usuario) {
-        if (usuarioRepository.existsById(id)) {
-            usuario.setId(id); // No perder el ID al actualizar
-            return usuarioRepository.save(usuario);
+        if (!usuarioRepository.existsById(id)) {
+            throw new RuntimeException("No se encontró el usuario con ID: " + id);
         }
-        return null; // Si no existe, retorna null
+        usuario.setId(id); // mantener el ID original
+        return usuarioRepository.save(usuario);
     }
 
     @Override
     public void eliminarUsuario(String id) {
-        if (usuarioRepository.existsById(id)) {
-            usuarioRepository.deleteById(id);
+        if (!usuarioRepository.existsById(id)) {
+            throw new RuntimeException("No se encontró el usuario con ID: " + id);
         }
+        usuarioRepository.deleteById(id);
     }
 }

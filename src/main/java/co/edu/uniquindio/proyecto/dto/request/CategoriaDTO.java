@@ -1,6 +1,7 @@
 package co.edu.uniquindio.proyecto.dto.request;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 
 @Schema(description = "DTO para la creación de una categoría")
 public record CategoriaDTO(
@@ -9,6 +10,7 @@ public record CategoriaDTO(
                 description = "Nombre de la categoría",
                 example = "Vías dañadas"
         )
+        @NotBlank(message = "El nombre es obligatorio")
         String nombre,
 
         @Schema(

@@ -10,7 +10,6 @@ import java.util.Set;
 import java.util.UUID;
 
 @Document(collection = "comentarios")
-
 @Schema(description = "Comentario en un reporte ciudadano")
 @Data
 @NoArgsConstructor
@@ -43,11 +42,6 @@ public class Comentario {
     @Builder.Default
     private Set<String> usuariosLike = new HashSet<>();
 
-    /**
-     * Añade un like de un usuario si no lo ha dado antes.
-     * @param usuarioId ID del usuario que da like
-     * @return true si se añadió el like, false si ya lo había dado
-     */
     public boolean darLike(String usuarioId) {
         boolean agregado = usuariosLike.add(usuarioId);
         if (agregado) {
@@ -56,11 +50,6 @@ public class Comentario {
         return agregado;
     }
 
-    /**
-     * Quita un like de un usuario.
-     * @param usuarioId ID del usuario que quita el like
-     * @return true si se quitó el like, false si no lo había dado
-     */
     public boolean quitarLike(String usuarioId) {
         boolean eliminado = usuariosLike.remove(usuarioId);
         if (eliminado) {

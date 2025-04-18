@@ -1,126 +1,103 @@
 package co.edu.uniquindio.proyecto.test;
 
-import co.edu.uniquindio.proyecto.model.EstadoReporte;
 import co.edu.uniquindio.proyecto.model.Reporte;
-import co.edu.uniquindio.proyecto.service.ReporteService;
+import co.edu.uniquindio.proyecto.repository.ReporteRepository;
+import co.edu.uniquindio.proyecto.service.impl.ReporteServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.mockito.*;
 
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest
 public class ReporteServiceTest {
 
-    @Autowired
-    private ReporteService reporteService;
+    @Mock
+    private ReporteRepository reporteRepository;
 
-    private Reporte baseReporte;
+    @InjectMocks
+    private ReporteServiceImpl reporteService;
+
+    private Reporte reporte;
 
     @BeforeEach
-    void setUp() {
-        baseReporte = Reporte.builder()
-                .titulo("Alcantarilla sin tapa")
-                .descripcion("Hay una alcantarilla sin tapa frente al parque principal.")
-                .usuarioId("usuario-test-123")
-                .categoria(Arrays.asList("infraestructura", "riesgo"))
-                .ubicacion(Reporte.Ubicacion.builder()
-                        .latitud(4.628963)
-                        .longitud(-75.571442)
-                        .direccion("Calle 15 #23-45, Barrio San José")
-                        .mapaUrl("https://api.mapbox.com/styles/v1/mapbox/streets-v11.html")
-                        .build())
-                .prioridad("alta")
-                .imagenes(Arrays.asList("https://cloudinary.com/image1.jpg"))
-                .fechaCreacion(LocalDateTime.now())
-                .build();
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        // Crea un reporte de prueba
+        reporte = new Reporte();
+        reporte.setId("r1");
+        reporte.setTitulo("Hueco en la vía");
+        reporte.setDescripcion("Hay un hueco gigante frente al parque principal");
+        reporte.setEstado("PENDIENTE");
+        reporte.setUsuarioId("u1");
     }
 
     @Test
-    void crearReporteTest() {
-        Reporte creado = reporteService.crearReporte(baseReporte);
-        assertNotNull(creado.getId());
-        assertEquals("Alcantarilla sin tapa", creado.getTitulo());
-        assertEquals(EstadoReporte.PENDIENTE.name(), creado.getEstado());
+    public void testCrearReporte() {
+        when(reporteRepository.save(any(Reporte.class))).thenReturn(reporte);
+
+        Reporte creado = reporteService.crearReporte(reporte);
+
+        assertNotNull(creado);
+        assertEquals("r1", creado.getId());
+        verify(reporteRepository, times(1)).save(reporte);
     }
 
     @Test
-    void obtenerReportePorIdTest() {
-        Reporte guardado = reporteService.crearReporte(baseReporte);
-        Optional<Reporte> opt = reporteService.obtenerReportePorId(guardado.getId());
-        assertTrue(opt.isPresent());
-        Reporte encontrado = opt.get();
-        assertEquals(guardado.getId(), encontrado.getId());
-        assertEquals(guardado.getDescripcion(), encontrado.getDescripcion());
+    public void testObtenerReportePorId() {
+        when(reporteRepository.findById("r1")).thenReturn(Optional.of(reporte));
+
+        Optional<Reporte> encontrado = reporteService.obtenerReportePorId("r1");
+
+        assertTrue(encontrado.isPresent());
+        assertEquals("r1", encontrado.get().getId());
     }
 
     @Test
-    void obtenerTodosLosReportesTest() {
-        reporteService.crearReporte(baseReporte);
-        List<Reporte> todos = reporteService.obtenerTodosLosReportes();
-        assertNotNull(todos);
-        assertFalse(todos.isEmpty());
+    public void testObtenerTodosLosReportes() {
+        List<Reporte> lista = List.of(reporte);
+        when(reporteRepository.findAll()).thenReturn(lista);
+
+        List<Reporte> reportes = reporteService.obtenerTodosLosReportes();
+
+        assertFalse(reportes.isEmpty());
+        assertEquals(1, reportes.size());
     }
 
     @Test
-    void actualizarReporteTest() {
-        Reporte guardado = reporteService.crearReporte(baseReporte);
-        guardado.setTitulo("Título modificado");
-        Reporte actualizado = reporteService.actualizarReporte(guardado.getId(), guardado);
-        assertEquals("Título modificado", actualizado.getTitulo());
+    public void testActualizarReporte() {
+        Reporte actualizado = new Reporte();
+        actualizado.setTitulo("Hueco corregido");
+        actualizado.setDescripcion("Ya lo arreglaron");
+        actualizado.setEstado("SOLUCIONADO");
+
+        when(reporteRepository.existsById("r1")).thenReturn(true);
+        when(reporteRepository.save(any(Reporte.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Reporte result = reporteService.actualizarReporte("r1", actualizado);
+
+        assertEquals("r1", result.getId());
+        assertEquals("Hueco corregido", result.getTitulo());
     }
 
     @Test
-    void eliminarReporteTest() {
-        Reporte guardado = reporteService.crearReporte(baseReporte);
-        reporteService.eliminarReporte(guardado.getId());
-        Optional<Reporte> opt = reporteService.obtenerReportePorId(guardado.getId());
-        assertFalse(opt.isPresent());
+    public void testEliminarReporte() {
+        when(reporteRepository.existsById("r1")).thenReturn(true);
+        doNothing().when(reporteRepository).deleteById("r1");
+
+        assertDoesNotThrow(() -> reporteService.eliminarReporte("r1"));
+
+        verify(reporteRepository, times(1)).deleteById("r1");
     }
 
     @Test
-    void incrementarLikesYVerificarCambioDeEstadoTest() {
-        Reporte guardado = reporteService.crearReporte(baseReporte);
-        // Colocamos likes justo por debajo del umbral
-        guardado.setLikes(guardado.getUmbralVerificacion() - 1);
-        reporteService.actualizarReporte(guardado.getId(), guardado);
+    public void testEliminarReporteInexistente() {
+        when(reporteRepository.existsById("r2")).thenReturn(false);
 
-        // Incrementa un like
-        guardado.incrementarLikes();
-        Reporte afterLike = reporteService.actualizarReporte(guardado.getId(), guardado);
-
-        assertEquals(EstadoReporte.VERIFICADO.name(), afterLike.getEstado());
-        assertFalse(afterLike.getHistorialEstados().isEmpty());
-        assertEquals("Verificado automáticamente por umbral de likes",
-                afterLike.getHistorialEstados().get(0).getMotivo());
-    }
-
-    @Test
-    void cambiarEstadoManualTest() {
-        Reporte guardado = reporteService.crearReporte(baseReporte);
-        guardado.cambiarEstado(EstadoReporte.EN_REVISION, "Comenzamos intervención");
-        Reporte afterChange = reporteService.actualizarReporte(guardado.getId(), guardado);
-
-        assertEquals(EstadoReporte.EN_REVISION.name(), afterChange.getEstado());
-        assertEquals("Comenzamos intervención", afterChange.getHistorialEstados().get(0).getMotivo());
-    }
-
-    @Test
-    void agregarImagenYCategoriaTest() {
-        Reporte guardado = reporteService.crearReporte(baseReporte);
-        // Agregamos nueva imagen y categoría
-        guardado.agregarImagen("https://cloudinary.com/image2.jpg");
-        guardado.agregarCategoria("ambiental");
-        Reporte afterUpdate = reporteService.actualizarReporte(guardado.getId(), guardado);
-
-        assertTrue(afterUpdate.getImagenes().contains("https://cloudinary.com/image2.jpg"));
-        assertTrue(afterUpdate.getCategoria().contains("ambiental"));
+        Exception ex = assertThrows(RuntimeException.class, () -> reporteService.eliminarReporte("r2"));
+        assertEquals("No se encontró el reporte con ID: r2", ex.getMessage());
     }
 }

@@ -14,8 +14,8 @@ import java.util.List;
 public interface ReporteRepository extends MongoRepository<Reporte, String> {
 
     // ======================
-    // CONSULTAS BÁSICAS
-    // ======================
+// CONSULTAS BÁSICAS
+// ======================
 
     @Query("{ 'usuarioId': ?0 }")
     List<Reporte> findByUsuarioId(String usuarioId);
@@ -29,6 +29,9 @@ public interface ReporteRepository extends MongoRepository<Reporte, String> {
 
     @Query("{ 'prioridad': ?0 }")
     List<Reporte> findByPrioridad(String prioridad);
+
+    @Query("{ 'categoria': ?0 }")
+    List<Reporte> findByCategoria(String categoria);
 
     // ======================
     // CONSULTAS POR FECHA

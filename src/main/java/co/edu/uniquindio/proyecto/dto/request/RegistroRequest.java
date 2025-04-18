@@ -5,7 +5,6 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 @Data
-
 @Schema(description = "Petición para registrar un nuevo usuario")
 public class RegistroRequest {
 
@@ -27,46 +26,7 @@ public class RegistroRequest {
 
     @Schema(description = "Rol del usuario", example = "ROLE_USER", required = true)
     @NotBlank(message = "El rol es obligatorio")
+    // (Opcional) validación de roles aceptados, si quieres limitarlo explícitamente
+    @Pattern(regexp = "ROLE_USER|ROLE_ADMIN", message = "El rol debe ser ROLE_USER o ROLE_ADMIN")
     private String rol;
-
-    // Getters y Setters
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getCorreo() {
-        return correo;
-    }
-
-    public void setCorreo(String correo) {
-        this.correo = correo;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getTelefono() {
-        return telefono;
-    }
-
-    public void setTelefono(String telefono) {
-        this.telefono = telefono;
-    }
-
-    public String getRol() {
-        return rol;
-    }
-
-    public void setRol(String rol) {
-        this.rol = rol;
-    }
 }
