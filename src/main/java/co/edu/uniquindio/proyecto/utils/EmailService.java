@@ -18,7 +18,7 @@ public class EmailService {
         mensaje.setText(String.format(
                 "¡Bienvenido!\n\n" +
                         "Tu código de activación es: %s\n\n" +
-                        "Este código expirará en 24 horas.",
+                        "Este código expirará en 15 minutos.",
                 codigo
         ));
         mailSender.send(mensaje);

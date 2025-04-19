@@ -1,6 +1,7 @@
 package co.edu.uniquindio.proyecto.service;
 
 import co.edu.uniquindio.proyecto.model.Usuario;
+import co.edu.uniquindio.proyecto.dto.request.ActivacionDTO;
 
 import java.util.List;
 
@@ -15,4 +16,6 @@ public interface UsuarioService {
     Usuario actualizarUsuario(String id, Usuario usuario);
 
     void eliminarUsuario(String id);
+
+    void activarCuenta(ActivacionDTO dto);
 }

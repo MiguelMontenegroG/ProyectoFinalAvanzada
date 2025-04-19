@@ -1,8 +1,13 @@
 package co.edu.uniquindio.proyecto.controller;
 
+import co.edu.uniquindio.proyecto.dto.request.ActivacionDTO;
 import co.edu.uniquindio.proyecto.model.Usuario;
 import co.edu.uniquindio.proyecto.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -51,5 +56,24 @@ public class UsuarioController {
     public ResponseEntity<Void> eliminarUsuario(@PathVariable String id) {
         usuarioService.eliminarUsuario(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/activar")
+    @Operation(
+            summary = "Activar cuenta de usuario",
+            description = "Valida el código de activación enviado al correo del usuario y activa la cuenta si el código es correcto y no ha expirado.",
+            requestBody = @RequestBody(
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = ActivacionDTO.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Cuenta activada correctamente"),
+                    @ApiResponse(responseCode = "400", description = "Código incorrecto o expirado"),
+                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+            }
+    )
+    public ResponseEntity<String> activarCuenta(@RequestBody ActivacionDTO dto) {
+        usuarioService.activarCuenta(dto);
+        return ResponseEntity.ok("Cuenta activada correctamente");
     }
 }
