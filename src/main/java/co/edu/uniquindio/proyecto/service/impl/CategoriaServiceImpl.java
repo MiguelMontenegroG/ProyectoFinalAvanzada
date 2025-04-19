@@ -1,6 +1,6 @@
 package co.edu.uniquindio.proyecto.service.impl;
 
-import co.edu.uniquindio.proyecto.dto.request.CategoriaDTO;
+import co.edu.uniquindio.proyecto.dto.CategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.response.CategoriaResponse;
 import co.edu.uniquindio.proyecto.model.Categoria;
 import co.edu.uniquindio.proyecto.repository.CategoriaRepository;

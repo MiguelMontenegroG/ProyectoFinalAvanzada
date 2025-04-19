@@ -1,6 +1,6 @@
 package co.edu.uniquindio.proyecto.service;
 
-import co.edu.uniquindio.proyecto.dto.request.CategoriaDTO;
+import co.edu.uniquindio.proyecto.dto.CategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.response.CategoriaResponse;
 
 import java.util.List;

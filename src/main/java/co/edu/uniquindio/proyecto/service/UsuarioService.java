@@ -1,7 +1,7 @@
 package co.edu.uniquindio.proyecto.service;
 
 import co.edu.uniquindio.proyecto.model.Usuario;
-import co.edu.uniquindio.proyecto.dto.request.ActivacionDTO;
+import co.edu.uniquindio.proyecto.dto.ActivacionDTO;
 
 import java.util.List;
 

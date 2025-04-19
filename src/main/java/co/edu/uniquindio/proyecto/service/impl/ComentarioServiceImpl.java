@@ -22,15 +22,11 @@ public class ComentarioServiceImpl implements ComentarioService {
 
     @Override
     public ComentarioResponse crearComentario(ComentarioRequest comentarioRequest) {
-        Comentario comentario = new Comentario(
-                null,
-                comentarioRequest.getTexto(),
-                comentarioRequest.getUsuarioId(),
-                comentarioRequest.getReporteId(),
-                null, // Usamos la fecha por defecto
-                0, // Iniciamos con 0 likes
-                new HashSet<>()
-        );
+        Comentario comentario = Comentario.builder()
+                .texto(comentarioRequest.getTexto())
+                .usuarioId(comentarioRequest.getUsuarioId())
+                .reporteId(comentarioRequest.getReporteId())
+                .build();
         Comentario comentarioGuardado = comentarioRepository.save(comentario);
         return new ComentarioResponse(comentarioGuardado);
     }

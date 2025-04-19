@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface ComentarioService {
 
     ComentarioResponse crearComentario(ComentarioRequest comentarioRequest);
-    Optional<ComentarioResponse> obtenerComentarioPorId(String id);
+    Optional<ComentarioResponse> obtenerComentarioPorId(String comentarioId);
     List<ComentarioResponse> obtenerComentariosPorReporte(String reporteId);
     ComentarioResponse actualizarComentario(String id, ComentarioRequest comentarioRequest);
     void eliminarComentario(String id);

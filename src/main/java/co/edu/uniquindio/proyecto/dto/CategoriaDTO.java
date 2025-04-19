@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.dto.request;
+package co.edu.uniquindio.proyecto.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;

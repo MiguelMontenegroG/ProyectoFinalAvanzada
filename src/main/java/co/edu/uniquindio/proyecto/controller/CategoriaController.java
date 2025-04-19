@@ -1,6 +1,6 @@
 package co.edu.uniquindio.proyecto.controller;
 
-import co.edu.uniquindio.proyecto.dto.request.CategoriaDTO;
+import co.edu.uniquindio.proyecto.dto.CategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.response.CategoriaResponse;
 import co.edu.uniquindio.proyecto.service.CategoriaService;
 import io.swagger.v3.oas.annotations.Operation;

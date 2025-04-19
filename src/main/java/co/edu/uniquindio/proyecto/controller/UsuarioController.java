@@ -1,6 +1,6 @@
 package co.edu.uniquindio.proyecto.controller;
 
-import co.edu.uniquindio.proyecto.dto.request.ActivacionDTO;
+import co.edu.uniquindio.proyecto.dto.ActivacionDTO;
 import co.edu.uniquindio.proyecto.model.Usuario;
 import co.edu.uniquindio.proyecto.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;

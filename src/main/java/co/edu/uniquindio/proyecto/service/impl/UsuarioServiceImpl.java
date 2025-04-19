@@ -1,6 +1,6 @@
 package co.edu.uniquindio.proyecto.service.impl;
 
-import co.edu.uniquindio.proyecto.dto.request.ActivacionDTO;
+import co.edu.uniquindio.proyecto.dto.ActivacionDTO;
 import co.edu.uniquindio.proyecto.model.Usuario;
 import co.edu.uniquindio.proyecto.repository.UsuarioRepository;
 import co.edu.uniquindio.proyecto.service.UsuarioService;
