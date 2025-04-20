@@ -1,6 +1,7 @@
 package co.edu.uniquindio.proyecto.controller;
 
 import co.edu.uniquindio.proyecto.dto.ActivacionDTO;
+import co.edu.uniquindio.proyecto.dto.request.UsuarioRequest;
 import co.edu.uniquindio.proyecto.model.Usuario;
 import co.edu.uniquindio.proyecto.service.UsuarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,10 +28,30 @@ public class UsuarioController {
     }
 
     @PostMapping
-    @Operation(summary = "Registrar un nuevo usuario")
-    public ResponseEntity<Usuario> registrarUsuario(@RequestBody Usuario usuario) {
-        Usuario nuevoUsuario = usuarioService.crearUsuario(usuario);
+    public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody UsuarioRequest usuarioDTO) {
+        System.out.println("=== DATOS RECIBIDOS ===");
+        System.out.println("Nombre: " + usuarioDTO.getNombre());
+        System.out.println("Correo: " + usuarioDTO.getCorreo());
+        System.out.println("Password: " + usuarioDTO.getPassword());
+
+        Usuario nuevoUsuario = usuarioService.crearUsuario(convertirDtoAEntidad(usuarioDTO));
         return ResponseEntity.ok(nuevoUsuario);
+    }
+
+    private Usuario convertirDtoAEntidad(UsuarioRequest dto) {
+        return Usuario.builder()
+                .nombre(dto.getNombre())
+                .correo(dto.getCorreo())
+                .telefono(dto.getTelefono())
+                .direccion(dto.getDireccion())
+                .ciudad(dto.getCiudad())
+                .barrio(dto.getBarrio())
+                .fotoPerfil(dto.getFotoPerfil())
+                .biografia(dto.getBiografia())
+                .rol(dto.getRol() != null ? dto.getRol() : "cliente")
+                .password(dto.getPassword())
+                .activo(false)
+                .build();
     }
 
     @GetMapping("/{id}")

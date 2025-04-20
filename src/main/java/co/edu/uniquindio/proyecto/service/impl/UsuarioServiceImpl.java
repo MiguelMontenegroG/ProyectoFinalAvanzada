@@ -18,19 +18,16 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     public Usuario crearUsuario(Usuario usuario) {
-        // Generar código y fecha de expiración
+        // Validar que el correo no exista
+        if(usuarioRepository.existsByCorreo(usuario.getCorreo())) {
+            throw new RuntimeException("El correo ya está registrado");
+        }
+
+        // Generar código de activación
         usuario.generarCodigoActivacion();
 
-        // Guardar el usuario en la base de datos
-        Usuario usuarioGuardado = usuarioRepository.save(usuario);
-
-        // Imprimir en consola para pruebas
-        System.out.println("=== NUEVO USUARIO REGISTRADO ===");
-        System.out.println("Correo: " + usuarioGuardado.getCorreo());
-        System.out.println("Código de activación: " + usuarioGuardado.getCodigoActivacion());
-        System.out.println("Expira en: " + usuarioGuardado.getFechaExpiracionCodigo());
-
-        return usuarioGuardado;
+        // Guardar usuario
+        return usuarioRepository.save(usuario);
     }
 
 

@@ -7,6 +7,7 @@ import java.util.Arrays;
 
 public enum EstadoReporte {
     PENDIENTE,
+    EN_PROCESO,
     EN_REVISION,
     VERIFICADO,
     RECHAZADO,
