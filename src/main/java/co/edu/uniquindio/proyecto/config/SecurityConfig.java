@@ -13,7 +13,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // Deshabilitar CSRF
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll() // Permitir acceso sin autenticación a todas las rutas
+                        .anyRequest().permitAll() // Permitir acceso sin autenticación a todas las rutas (temporal)
                 )
                 .formLogin(form -> form.disable()) // Deshabilitar formulario de login
                 .httpBasic(httpBasic -> httpBasic.disable()); // Deshabilitar autenticación básica
