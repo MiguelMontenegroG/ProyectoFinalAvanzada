@@ -15,7 +15,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll() // Permitir acceso sin autenticación a todas las rutas (temporal)
                 )
-                .formLogin(form -> form.disable()) // Deshabilitar formulario de login
+                .formLogin(form -> form.disable()) // Deshabilitar formulario de login (temporal)
                 .httpBasic(httpBasic -> httpBasic.disable()); // Deshabilitar autenticación básica
 
         return http.build();
